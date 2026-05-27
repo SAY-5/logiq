@@ -43,12 +43,23 @@ class Ingestor:
         """Durably ingest a batch. Returns the WAL sequence number.
 
         Steps: append to WAL (acknowledge), commit to store, mark
-        committed. If crash_point == "after_wal" the method returns right
-        after the durable append, modelling a crash before commit.
+        committed. crash_point is a test hook modelling a process death
+        at a chosen step:
+
+        - "after_wal": return right after the durable append, before any
+          store write, modelling a crash before commit.
+        - "partial_commit": write the first half of the batch to the
+          store, then return before the commit marker, modelling a crash
+          after some rows landed but before the batch was acknowledged
+          committed.
         """
         batch = list(records)
         seq = self._wal.append_batch(batch)
         if crash_point == "after_wal":
+            return seq
+        if crash_point == "partial_commit":
+            half = max(1, len(batch) // 2)
+            self._store.write_batch(batch[:half])
             return seq
         self._store.write_batch(batch)
         self._wal.mark_committed(seq)
