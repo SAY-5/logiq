@@ -148,7 +148,9 @@ class Store:
         has_more = len(fetched) > q.limit
         rows = fetched[: q.limit]
         records = [self._row_to_record(r) for r in rows]
-        scanned = self._partition_count() if prune_keys is None else len(prune_keys)
+        # When the query is unbounded in time it touches every partition;
+        # report -1 rather than running a separate count over the table.
+        scanned = len(prune_keys) if prune_keys is not None else -1
         return Page(
             records=records,
             next_offset=(q.offset + q.limit) if has_more else None,
@@ -201,7 +203,8 @@ class Store:
             cur.execute("SELECT COUNT(*) FROM logs")
             return int(cur.fetchone()[0])
 
-    def _partition_count(self) -> int:
+    def partition_count(self) -> int:
+        """Number of distinct partitions currently in the store."""
         with self._cursor() as cur:
             cur.execute("SELECT COUNT(DISTINCT partition_key) FROM logs")
             return int(cur.fetchone()[0])
