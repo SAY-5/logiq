@@ -1,0 +1,33 @@
+# Local stack: the LogIQ service plus a Postgres instance.
+#
+# The service ships with a SQLite store by default for a zero-dependency
+# run. Postgres is provided here for a larger partitioned store; point
+# the service at it by installing the postgres extra and setting a
+# Postgres DSN in LOGIQ_DB once that backend is wired in your deployment.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: logiq
+      POSTGRES_PASSWORD: logiq
+      POSTGRES_DB: logiq
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U logiq"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  logiq:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - logiq-data:/data
+
+volumes:
+  logiq-data:
