@@ -22,7 +22,7 @@ jobs:
       - name: Type check
         run: mypy logiq benchmarks
       - name: Test
-        run: pytest --cov=logiq --cov-fail-under=88
+        run: pytest --cov=logiq --cov-fail-under=90
       - name: Build
         run: |
           pip install build
