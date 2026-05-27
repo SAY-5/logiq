@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "logiq"
+version = "0.4.0"
+description = "Distributed log aggregation and query service with a partitioned SQL store, indexed query API, and crash recovery."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "SAY-5" }]
+dependencies = [
+    "fastapi>=0.110",
+    "pydantic>=2.6",
+    "uvicorn>=0.27",
+]
+
+[project.optional-dependencies]
+postgres = ["psycopg[binary]>=3.1"]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=4.1",
+    "httpx>=0.27",
+    "ruff>=0.5",
+    "mypy>=1.10",
+]
+
+[project.scripts]
+logiq = "logiq.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["logiq*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "W"]
+
+[tool.ruff.lint.per-file-ignores]
+# Depends(...) in argument defaults is the standard FastAPI injection idiom.
+"logiq/api.py" = ["B008"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_unused_ignores = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
